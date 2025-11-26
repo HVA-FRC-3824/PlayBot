@@ -64,6 +64,13 @@ void Chassis::ResetDriveEncoders()
 }
 #pragma endregion
 
+#pragma region ResetOdometry
+void Chassis::ResetOdometry(const frc::Pose2d& pose)
+{
+    m_poseEstimator.ResetPosition(GetHeading(), GetModulePositions(), pose);
+}
+#pragma endregion
+
 #pragma region GetModuleStates
 /// @brief Method to get the current swerve module states.
 /// @return The current swerve module states.

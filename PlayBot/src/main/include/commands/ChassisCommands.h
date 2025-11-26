@@ -1,15 +1,21 @@
 #pragma once
-#pragma warning(disable : 4068) // Disable warnings for unknown pragmas
 
 #pragma region Includes
-#include <frc2/command/CommandPtr.h>
 
+#include <frc2/command/CommandPtr.h>
 #include <frc2/command/InstantCommand.h>
 #include <frc2/command/WaitCommand.h>
 
 #include <frc/geometry/Pose2d.h>
 #include <frc/geometry/Transform2d.h>
 #include <frc/kinematics/ChassisSpeeds.h>
+#include <frc/controller/ProfiledPIDController.h>
+#include <frc/trajectory/Trajectory.h>
+#include <frc/trajectory/TrajectoryGenerator.h>
+#include <frc2/command/Commands.h>
+#include <frc2/command/InstantCommand.h>
+#include <frc2/command/SequentialCommandGroup.h>
+#include <frc2/command/SwerveControllerCommand.h>
 
 #include "subsystems/Chassis.h"
 #pragma endregion
@@ -38,22 +44,8 @@ inline frc2::CommandPtr ChassisDrive(Chassis* chassis, std::function<frc::Chassi
     // Create and return a repeating InstantCommand that drives the chassis
     return frc2::InstantCommand{
         [chassis, chassisSpeedsSupplier] () { chassis->Drive(chassisSpeedsSupplier()); }, // Execution function (runs repeatedly while the command is active)
-        { chassis }                                                                                      // Requirements (subsystems required by this command)
+        { chassis }                                                                       // Requirements (subsystems required by this command)
     }.ToPtr().Repeatedly();
-}
-#pragma endregion
-
-#pragma region ChassisDrivePose(Chassis* chassis, std::string CommandName)
-/// @brief Creates a command to drive the chassis to a specified pose.
-/// @param chassis A pointer to the chassis subsystem.
-/// @param CommandName The name of the command or path to follow.
-/// @return A CommandPtr that drives the chassis to the specified pose.
-inline frc2::CommandPtr ChassisDrivePose(Chassis* chassis, std::string CommandName)
-{
-    //return AutoBuilder::followPath(PathPlannerPath::fromPathFile(CommandName));
-
-    // Note: Temporary fix for pathplanner not working correctly when called immediately after another command
-    return frc2::WaitCommand(0.1_s).ToPtr(); 
 }
 #pragma endregion
 
@@ -62,12 +54,70 @@ inline frc2::CommandPtr ChassisDrivePose(Chassis* chassis, std::string CommandNa
 /// @param chassis A pointer to the chassis subsystem.
 /// @param targetPose The target pose to drive to. End goal state relative to the origin, blue alliance side.
 /// @return A CommandPtr that drives the chassis to the specified pose.
-inline frc2::CommandPtr ChassisDrivePose(Chassis* chassis, frc::Pose2d targetPose)
+// TODO: UPDATE std::vector to use ... to do variable amounts of poses
+inline frc2::CommandPtr ChassisDrivePose(Chassis* chassis, std::vector<frc::Pose2d> targetPose)
 {
-    // return AutoBuilder::pathfindToPose(targetPose, constants::PathPlanner::Constraints);
+    // Set up config for trajectory
+    frc::TrajectoryConfig config(constants::swerve::maxSpeed,
+                                constants::swerve::maxAngularVelocity);
 
-    // Note: Temporary fix for pathplanner not working correctly when called immediately after another command
-    return frc2::WaitCommand(0.1_s).ToPtr(); 
+    // Add kinematics to ensure max speed is actually obeyed
+    config.SetKinematics(chassis->GetKinematics());
+
+    frc::Pose2d finalPosition = targetPose.back();
+    targetPose.pop_back(); // Remove the end pose
+    
+    std::vector<frc::Translation2d> waypoints{};
+    waypoints.reserve(targetPose.size() - 1);
+    for (int i = 0; i < targetPose.size() - 1; i++)
+    {
+        waypoints[i] = targetPose[i].Translation();
+    }
+
+    // An example trajectory to follow.  All units in meters.
+    auto exampleTrajectory = frc::TrajectoryGenerator::GenerateTrajectory(
+        // Start at the origin facing the +X direction
+        chassis.GetPose(),
+        // Pass through these two interior waypoints, making an 's' curve path
+        waypoints,
+        // End 3 meters straight ahead of where we started, facing forward
+        targetPose.back(),
+        // Pass the config
+        config
+    );
+
+    frc::ProfiledPIDController<units::radians> thetaController
+    {
+        1, 0, 0, 
+        frc::ProfiledPIDController<units::radians>::Constraints
+            {constants::swerve::maxAngularVelocity, constants::swerve::maxAngularVelocity / 2}
+    };
+
+    thetaController.EnableContinuousInput(units::radian_t{-std::numbers::pi},
+                                          units::radian_t{ std::numbers::pi});
+
+    // Reset odometry to the initial pose of the trajectory, run path following
+    // command, then stop at the end.
+    return frc2::SwerveControllerCommand<4>(
+        exampleTrajectory,
+        
+        [&]() { return chassis->GetPose(); },
+
+        chassis->GetKinematics(),
+
+        frc::PIDController{1, 0, 0},
+        frc::PIDController{1, 0, 0},
+        thetaController,
+
+        [&] (auto moduleStates) { chassis->SetModuleStates(moduleStates); },
+
+        { chassis }
+    ).AndThen(
+        frc2::InstantCommand(
+            [&] { chassis->Drive(frc::ChassisSpeeds{0_mps, 0_mps, 0_rad_per_s}); }, 
+            { chassis }
+        ).ToPtr()
+    );
 }
 #pragma endregion
 
@@ -105,6 +155,6 @@ inline frc2::CommandPtr AlignToNearestTag(Chassis* chassis, frc::Transform2d tar
             targetPosition.Rotation().Degrees() + targetOffset.Rotation().Degrees()
         };
 
-    return ChassisDrivePose(chassis, targetWithOffset);
+    return ChassisDrivePose(chassis, std::vector<frc::Pose2d>{targetWithOffset});
 }
 #pragma endregion

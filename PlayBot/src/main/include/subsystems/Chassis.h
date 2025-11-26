@@ -30,12 +30,22 @@ class Chassis : public frc2::SubsystemBase
         explicit                                 Chassis();
     
         void                                     Drive(const frc::ChassisSpeeds& speeds);
+
+        void SetModulesStates(const wpi::array<frc::SwerveModuleState, 4>& states)
+        {
+            m_swerveModules[0].SetDesiredState(states[0]);
+            m_swerveModules[1].SetDesiredState(states[1]);
+            m_swerveModules[2].SetDesiredState(states[2]);
+            m_swerveModules[3].SetDesiredState(states[3]);
+        }
     
         void                                     ZeroHeading();
         
         void                                     ResetWheelAnglesToZero();
         void                                     ResetDriveEncoders();
     
+        void                                     ResetOdometry(const frc::Pose2d& pose);
+
         wpi::array<frc::SwerveModuleState, 4>    GetModuleStates();
         wpi::array<frc::SwerveModulePosition, 4> GetModulePositions();
     
@@ -45,6 +55,8 @@ class Chassis : public frc2::SubsystemBase
         frc::Pose2d                              GetPose();
 
         frc::Pose2d                              GetNearestTag();
+
+        frc::SwerveDriveKinematics<4>&           GetKinematics() { return m_kinematics; }
         
         void                                     Periodic() override;
     
