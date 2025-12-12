@@ -43,33 +43,32 @@ namespace constants
         // PID, feedforward, and other configurations for the motors
         constexpr hardware::motor::MotorConfiguration driveMotorConfig
         {
-            40_A,            // Current Limit
-            true,            // Brake Mode
-            0.1, 0.02, 0.0,  // P, I , D
-            0.0, 0.0, 0.0    // S, V, A
+            40_A,                                  // Current Limit
+            true,                                  // Brake Mode
+            (0.0098022 * std::numbers::pi) / 6.75, // Conversion factor
+            0.1, 0.02, 0.0,                        // P, I , D
+            0.0, 0.0, 0.0                          // S, V, A
         };
 
+        // These need to be tuned istg
         constexpr hardware::motor::MotorConfiguration turnMotorConfig
         {
-            30_A,           // Current Limit
-            true,           // Brake Mode
-            1.0, 0.0, 0.2,  // P, I , D
-            0.0, 0.0, 0.0   // S, V, A
+            30_A,                          // Current Limit
+            true,                          // Brake Mode
+            (2 * std::numbers::pi) / 21.5, // Conversion factor
+            1.0, 0.0, 0.2,                 // P, I , D 
+            0.0, 0.0, 0.0                  // S, V, A  
         };
 
         // All encoders are going to be slightly off, this corrects that
-        constexpr units::radian_t frontLeftForwardAngle { 0.000000 * 2 * std::numbers::pi};
-        constexpr units::radian_t frontRightForwardAngle{ 0.000000 * 2 * std::numbers::pi};
-        constexpr units::radian_t rearLeftForwardAngle  { 0.000000 * 2 * std::numbers::pi};
-        constexpr units::radian_t rearRightForwardAngle { 0.000000 * 2 * std::numbers::pi};
+        constexpr units::turn_t frontRightForwardAngle{-0.193604};
+        constexpr units::turn_t frontLeftForwardAngle {-0.422119};
+        constexpr units::turn_t rearRightForwardAngle {-0.174561};
+        constexpr units::turn_t rearLeftForwardAngle  { 0.268555};
 
         // These make sure to limit how fast the robot can go
         constexpr units::meters_per_second_t  maxSpeed          {4};
         constexpr units::radians_per_second_t maxAngularVelocity{2 * std::numbers::pi};
-
-        // Conversion factors for the motors from encoders to actual movement
-        constexpr units::meter_t  driveConversion{(0.0098022 * std::numbers::pi) / 6.75};
-        constexpr units::radian_t angleConversion{(2 * std::numbers::pi) / 21.5};
 
         // The physical dimensions of the robot
         constexpr units::meter_t wheelBase {25};
@@ -93,6 +92,7 @@ namespace constants
         {
             30_A,           // Current Limit
             false,          // Brake Mode
+            1,              // Conversion factor
             5.0, 0.0, 0.0,  // P, I , D
             0.0, 2.0, 0.0   // S, V, A
         };
@@ -101,6 +101,7 @@ namespace constants
         {
             30_A,           // Current Limit
             true,           // Brake Mode
+            1,              // Conversion factor
             1.0, 0.0, 0.0,  // P, I , D
             0.0, 0.0, 0.0   // S, V, A
         };
@@ -109,6 +110,7 @@ namespace constants
         {
             30_A,           // Current Limit
             true,           // Brake Mode
+            1,              // Conversion factor
             1.0, 0.0, 0.0,  // P, I , D
             0.0, 0.0, 0.0   // S, V, A
         };
@@ -137,9 +139,9 @@ namespace constants
         // Drive Input Configurations
         constexpr int    DrivePort           =    0;
 
-        constexpr double TranslationDeadZone = 0.01;
-        constexpr double RotateDeadZone      = 0.01;
-        constexpr double FlywheelDeadZone    = 0.01;
+        constexpr double TranslationDeadZone = 0.06;
+        constexpr double RotateDeadZone      = 0.06;
+        constexpr double FlywheelDeadZone    = 0.06;
 
         constexpr double ExponentForward     = 3.0;
         constexpr double ExponentStrafe      = 3.0;

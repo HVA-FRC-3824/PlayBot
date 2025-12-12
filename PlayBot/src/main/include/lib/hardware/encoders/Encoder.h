@@ -11,7 +11,7 @@ namespace hardware::encoder
     {
         public:
 
-            virtual units::turn_t GetTurns() { return 0_tr; };
+            virtual units::turn_t GetTurns();
     };
 
 }

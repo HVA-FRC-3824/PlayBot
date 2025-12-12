@@ -9,6 +9,10 @@ void Robot::RobotInit()
 
     // Report the robot framework usage
     HAL_Report(HALUsageReporting::kResourceType_Framework, HALUsageReporting::kFramework_RobotBuilder);
+
+    // Instantiate after robot init
+    // This must be done here so that we can actually use the motors
+    m_robotContainer = RobotContainer::GetInstance();
 }
 #pragma endregion
 

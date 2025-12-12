@@ -1,5 +1,4 @@
 #pragma once
-#pragma warning(disable : 4068) // Disable warnings for unknown pragmas
 
 #include <hal/FRCUsageReporting.h>
 #include <frc/TimedRobot.h>
@@ -21,6 +20,6 @@ class Robot : public frc::TimedRobot
         // Pointer to the autonomous command
         frc2::Command  *m_autonomousCommand = nullptr;
 
-        // Instantiate the Robot container and get a pointer to the class
-        RobotContainer *m_robotContainer    = RobotContainer::GetInstance();
+        // A pointer to the robot container class
+        RobotContainer *m_robotContainer    = nullptr;
 };

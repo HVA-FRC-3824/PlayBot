@@ -15,8 +15,6 @@
 #include "subsystems/Chassis.h"
 #include "subsystems/Volcano.h"
 
-#include "lib/hardware/LEDs/LED.h"
-
 #include "commands/ChassisCommands.h"
 #include "commands/VolcanoCommands.h"
 
@@ -58,7 +56,7 @@ class RobotContainer
         Chassis                             m_chassis;
         Volcano                             m_volcano;
 
-        LED<constants::led::length>         m_led = LED<constants::led::length>(constants::led::port);
+        // LED<constants::led::length>         m_led = LED<constants::led::length>(constants::led::port);
 
         photon::PhotonCamera cameraRight{"CameraRight"};
         photon::PhotonCamera cameraLeft{"CameraLeft"};

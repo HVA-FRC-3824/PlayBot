@@ -63,17 +63,13 @@ class Chassis : public frc2::SubsystemBase
         std::array<subsystem::SwerveModule, 4> m_swerveModules
         {
             subsystem::SwerveModule{constants::swerve::frontLeftDriveCANid,  constants::swerve::frontLeftTurnCANid,  constants::swerve::frontLeftEncoderCANid,  
-                                    constants::swerve::driveMotorConfig,     constants::swerve::turnMotorConfig, 
-                                    constants::swerve::driveConversion,      constants::swerve::angleConversion},
+                                    constants::swerve::driveMotorConfig,     constants::swerve::turnMotorConfig},
             subsystem::SwerveModule{constants::swerve::frontRightDriveCANid, constants::swerve::frontRightTurnCANid, constants::swerve::frontRightEncoderCANid,
-                                    constants::swerve::driveMotorConfig,     constants::swerve::turnMotorConfig,
-                                    constants::swerve::driveConversion,      constants::swerve::angleConversion},
+                                    constants::swerve::driveMotorConfig,     constants::swerve::turnMotorConfig},
             subsystem::SwerveModule{constants::swerve::backLeftDriveCANid,   constants::swerve::backLeftTurnCANid,   constants::swerve::backLeftEncoderCANid,
-                                    constants::swerve::driveMotorConfig,     constants::swerve::turnMotorConfig, 
-                                    constants::swerve::driveConversion,      constants::swerve::angleConversion},
+                                    constants::swerve::driveMotorConfig,     constants::swerve::turnMotorConfig},
             subsystem::SwerveModule{constants::swerve::backRightDriveCANid,  constants::swerve::backRightTurnCANid,  constants::swerve::backRightEncoderCANid,  
-                                    constants::swerve::driveMotorConfig,     constants::swerve::turnMotorConfig, 
-                                    constants::swerve::driveConversion,      constants::swerve::angleConversion}
+                                    constants::swerve::driveMotorConfig,     constants::swerve::turnMotorConfig}
         };
 
         frc::SwerveDriveKinematics<4> m_kinematics

@@ -18,7 +18,7 @@
 
 #include <frc/RobotBase.h>
 
-#include "lib/hardware/Hardware.h"
+#include "lib/hardware/hardware.h"
 #pragma endregion
 
 namespace hardware
@@ -29,6 +29,7 @@ namespace hardware
         {
             units::ampere_t CurrentLimit;
             bool   breakMode;
+            double conversionFactor; // Multiply when apply, divide when recieve
             double P;
             double I;
             double D;

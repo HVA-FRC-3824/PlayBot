@@ -1,6 +1,5 @@
 #include "lib/hardware/gyro/Navx.h"
 
-#include <frc/smartdashboard/SmartDashboard.h>
 
 using namespace hardware::gyro;
 

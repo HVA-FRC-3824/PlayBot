@@ -41,8 +41,7 @@ namespace subsystem
         public:
 
             explicit                   SwerveModule(CANid_t driveMotorCanId, CANid_t angleMotorCanId, CANid_t angleEncoderCanId,
-                                                    hardware::motor::MotorConfiguration driveConfig, hardware::motor::MotorConfiguration turnConfig,
-                                                    units::meter_t driveMotorConversion, units::radian_t angleMotorConversion);
+                                                    hardware::motor::MotorConfiguration driveConfig, hardware::motor::MotorConfiguration turnConfig);
 
             void                       SetDesiredState(frc::SwerveModuleState& state);     // Sets the desired state for the module
 
@@ -60,8 +59,5 @@ namespace subsystem
             hardware::motor::TalonFX    m_driveMotor;
             hardware::motor::SparkMax   m_angleMotor;
             hardware::encoder::CANCoder m_angleAbsoluteEncoder;
-
-            units::meter_t              m_driveConversion;  // Conversion factor for drive motor
-            units::radian_t             m_angleConversion;  // Conversion factor for angle motor
     };
 }

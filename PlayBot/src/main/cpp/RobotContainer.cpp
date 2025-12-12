@@ -34,8 +34,6 @@ RobotContainer::RobotContainer()
         {&m_chassis} // Subsystem requirements
     ));
 
-    m_led.SetPattern(LEDType::GRADIENT, {frc::Color::kPurple, frc::Color::kGold});
-
     // Array of run-once controls, organized like this for simplicity and readability
     std::pair<Button, frc2::CommandPtr> runOnceControls[] =
     {
