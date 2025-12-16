@@ -109,7 +109,6 @@ double RobotContainer::GetExponentialValue(double joystickValue, double exponent
 }
 #pragma endregion
 
-
 #pragma region ProcessCameraResults
 /// @brief Method to process camera results and display on SmartDashboard.
 /// @param camera The PhotonCamera object to process.

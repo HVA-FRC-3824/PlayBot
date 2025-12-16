@@ -29,6 +29,8 @@ class Chassis : public frc2::SubsystemBase
 
         explicit                                 Chassis();
 
+        void                                     Periodic() override;
+
         void                                     Drive(const frc::ChassisSpeeds& speeds);
 
         void                                     ZeroHeading();
@@ -46,8 +48,6 @@ class Chassis : public frc2::SubsystemBase
 
         frc::Pose2d                              GetNearestTag();
         
-        void                                     Periodic() override;
-    
     private:
         
         // Swerve module order for kinematics calculations

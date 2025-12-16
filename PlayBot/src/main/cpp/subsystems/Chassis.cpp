@@ -1,10 +1,37 @@
 #include "subsystems/Chassis.h"
 
 #pragma region Chassis
+/// @brief Chassis class constructor.
 Chassis::Chassis()
 {
     // Set the swerve modules to their forward angles
     ResetWheelAnglesToZero();
+}
+#pragma endregion
+
+#pragma region Periodic
+/// @brief Method called once per scheduler run.
+void Chassis::Periodic()
+{
+    // Update odometry
+    // Update the pose estimator
+    m_poseEstimator.Update(GetHeading(), GetModulePositions());
+
+    // This also updates the pose estimator with vision as well as updating photonvisions internal estimators
+    m_vision.Periodic();
+
+    // Logging
+    Log("Swerve Module States ",         GetModuleStates());
+    Log("Desired Swerve Module States ", m_desiredStates);
+
+    Log("Swerve Module Positions ", GetModulePositions());
+
+    Log("Desired Chassis Speeds ", m_desiredSpeeds);
+    Log("Actual Chassis Speeds ",  m_kinematics.ToChassisSpeeds(GetModuleStates()));
+
+    Log("Robot Pose ", GetPose());
+
+    Log("Nearest Tag Pose ", GetNearestTag());
 }
 #pragma endregion
 
@@ -140,31 +167,5 @@ frc::Pose2d Chassis::GetPose()
 frc::Pose2d Chassis::GetNearestTag()
 {
     return GetPose().Nearest(constants::vision::AprilTagLocations::Pose2dTagsSpan);
-}
-#pragma endregion
-
-#pragma region Periodic
-/// @brief Method called once per scheduler run.
-void Chassis::Periodic()
-{
-    // Update odometry
-    // Update the pose estimator
-    m_poseEstimator.Update(GetHeading(), GetModulePositions());
-
-    // This also updates the pose estimator with vision as well as updating photonvisions internal estimators
-    m_vision.Periodic();
-
-    // Logging
-    Log("Swerve Module States ",         GetModuleStates());
-    Log("Desired Swerve Module States ", m_desiredStates);
-
-    Log("Swerve Module Positions ", GetModulePositions());
-
-    Log("Desired Chassis Speeds ", m_desiredSpeeds);
-    Log("Actual Chassis Speeds ",  m_kinematics.ToChassisSpeeds(GetModuleStates()));
-
-    Log("Robot Pose ", GetPose());
-
-    Log("Nearest Tag Pose ", GetNearestTag());
 }
 #pragma endregion
