@@ -40,49 +40,48 @@
 
 #include "Constants.h"
 
-
 class PhotonVision
 {
     public:
 
-        PhotonVision(std::string_view           cameraName,
-                    frc::Transform3d            robotToCamPose,
-                    frc::AprilTagFieldLayout    tagLayout,
-                    Eigen::Matrix<double, 3, 1> singleTagStdDevs,
-                    Eigen::Matrix<double, 3, 1> multiTagStdDevs,
-                    std::function<void(frc::Pose2d, units::second_t, Eigen::Matrix<double, 3, 1>)> estConsumer);
+        PhotonVision(std::string_view            cameraName,
+                     frc::Transform3d            robotToCameraPose,
+                     frc::AprilTagFieldLayout    tagLayout,
+                     Eigen::Matrix<double, 3, 1> singleTagStdDevs,
+                     Eigen::Matrix<double, 3, 1> multiTagStdDevs,
+                     std::function<void(frc::Pose2d, units::second_t, Eigen::Matrix<double, 3, 1>)> estConsumer);
         
         photon::PhotonPipelineResult GetLatestResult() ;
 
-        void Periodic();
+        void                         Periodic();
 
-        Eigen::Matrix<double, 3, 1> GetEstimationStdDevs(frc::Pose2d estimatedPose);
+        Eigen::Matrix<double, 3, 1>  GetEstimationStdDevs(frc::Pose2d estimatedPose);
 
-        void SimPeriodic(frc::Pose2d robotSimPose);
+        void                         SimPeriodic(frc::Pose2d robotSimPose);
 
-        void ResetSimPose(frc::Pose2d pose);
+        void                         ResetSimPose(frc::Pose2d pose);
 
-        frc::Field2d& GetSimDebugField();
+        frc::Field2d&                GetSimDebugField();
 
     private:
 
-        std::string_view         cameraName;
-        frc::Transform3d         robotToCamPose;
-        frc::AprilTagFieldLayout tagLayout;
+        std::string_view                             m_cameraName;
+        frc::Transform3d                             m_robotToCameraPose;
+        frc::AprilTagFieldLayout                     m_tagLayout;
 
-        photon::PhotonPoseEstimator photonEstimator;
+        photon::PhotonPoseEstimator                  m_photonEstimator;
 
-        photon::PhotonCamera camera;
+        photon::PhotonCamera                         m_camera;
 
-        Eigen::Matrix<double, 3, 1> singleTagStdDevs;
-        Eigen::Matrix<double, 3, 1> multiTagStdDevs;
+        Eigen::Matrix<double, 3, 1>                  m_singleTagStdDevs;
+        Eigen::Matrix<double, 3, 1>                  m_multiTagStdDevs;
 
-        std::unique_ptr<photon::VisionSystemSim>     visionSim;
-        std::unique_ptr<photon::SimCameraProperties> cameraProp;
-        std::shared_ptr<photon::PhotonCameraSim>     cameraSim;
+        std::unique_ptr<photon::VisionSystemSim>     m_visionSim;
+        std::unique_ptr<photon::SimCameraProperties> m_cameraProp;
+        std::shared_ptr<photon::PhotonCameraSim>     m_cameraSim;
 
         // The most recent result, cached for calculating std devs
         photon::PhotonPipelineResult                 m_latestResult;
         
-        std::function<void(frc::Pose2d, units::second_t, Eigen::Matrix<double, 3, 1>)> estConsumer;
+        std::function<void(frc::Pose2d, units::second_t, Eigen::Matrix<double, 3, 1>)> m_estConsumer;
 };

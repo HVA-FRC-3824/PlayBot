@@ -50,6 +50,8 @@ class Chassis : public frc2::SubsystemBase
         
     private:
         
+        void ProcessCameraResults(photon::PhotonCamera& camera, const std::string& cameraName);
+
         // Swerve module order for kinematics calculations
         //
         //         Front          Translation2d Coordinates
@@ -96,10 +98,13 @@ class Chassis : public frc2::SubsystemBase
     
         hardware::gyro::Navx                  m_gyro{};
 
-        PhotonVision m_vision
+        //photon::PhotonCamera m_cameraRight{"CameraRight"};
+        photon::PhotonCamera m_cameraLeft{"CameraLeft"};
+
+        PhotonVision m_cameraRight
         {
-            constants::vision::CameraName,
-            constants::vision::RobotToCam,
+            constants::vision::CameraNameRight,
+            constants::vision::RobotToCameraRight,
             constants::vision::TagLayout,
             constants::vision::SingleTagStdDevs,
             constants::vision::MultiTagStdDevs,

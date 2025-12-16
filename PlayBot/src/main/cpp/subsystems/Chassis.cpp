@@ -18,7 +18,11 @@ void Chassis::Periodic()
     m_poseEstimator.Update(GetHeading(), GetModulePositions());
 
     // This also updates the pose estimator with vision as well as updating photonvisions internal estimators
-    m_vision.Periodic();
+    m_cameraRight.Periodic();
+
+    // Process camera results for both cameras
+    //ProcessCameraResults(m_cameraRight, "Right");
+    ProcessCameraResults(m_cameraLeft,  "Left");
 
     // Logging
     Log("Swerve Module States ",         GetModuleStates());
@@ -158,6 +162,91 @@ frc::Pose2d Chassis::GetPose()
 {
     // Return the estimated robot pose
     return m_poseEstimator.GetEstimatedPosition();
+}
+#pragma endregion
+
+#pragma region ProcessCameraResults
+/// @brief Method to process camera results and display on SmartDashboard.
+/// @param camera The PhotonCamera object to process.
+/// @param cameraName The name of the camera for SmartDashboard keys.
+void Chassis::ProcessCameraResults(photon::PhotonCamera& camera, const std::string& cameraName) 
+{
+    // Get all unread results from the camera
+    auto results = camera.GetAllUnreadResults();
+
+    // Determine if any targets were found
+    if (results.size() > 0) 
+    {
+        frc::SmartDashboard::PutNumber(cameraName + " Number of Results", results.size());
+
+        // Get the last one in the list.
+        auto result = results[results.size() - 1];
+
+        // Check if the result has targets
+        bool hasTarget = result.HasTargets();
+        frc::SmartDashboard::PutBoolean(cameraName + " Has Target", hasTarget);
+
+        // If there is a target, process it
+        if (hasTarget) 
+        {
+            // Get the best target
+            auto target = result.GetBestTarget();
+
+            // Extract target information
+            double yaw        = target.GetYaw();
+            double pitch      = target.GetPitch();
+            double area       = target.GetArea();
+            double skew       = target.GetSkew();
+            double confidence = target.GetDetectedObjectConfidence();
+            int fiducialId    = target.GetFiducialId();
+
+            frc::SmartDashboard::PutNumber(cameraName + " Target Yaw", yaw);
+            frc::SmartDashboard::PutNumber(cameraName + " Target Pitch", pitch);
+            frc::SmartDashboard::PutNumber(cameraName + " Target Area", area);
+            frc::SmartDashboard::PutNumber(cameraName + " Target Skew", skew);
+            frc::SmartDashboard::PutNumber(cameraName + " Target Confidence", confidence);
+            frc::SmartDashboard::PutNumber(cameraName + " Target Fiducial ID", fiducialId);
+
+            // Get result latency
+            auto latency = result.GetLatency();
+
+            frc::SmartDashboard::PutNumber(cameraName + " Result Latency", latency.value());
+
+            // Get pose ambiguity
+            double poseAmbuguity = target.GetPoseAmbiguity();
+
+            frc::SmartDashboard::PutNumber(cameraName + " Ambiguity", poseAmbuguity);
+
+            // Check for low pose ambiguity
+            if (poseAmbuguity < 0.2) 
+            {
+                // Get the best camera-to-target pose
+                auto pose = target.GetBestCameraToTarget();
+
+                // Extract position (x, y, z) in meters
+                double x = pose.X().value();
+                double y = pose.Y().value();
+                double z = pose.Z().value();
+
+                // Extract orientation (roll, pitch, yaw) in degrees
+                double roll  = pose.Rotation().Axis().x();
+                double pitch = pose.Rotation().Axis().y();
+                double yaw   = pose.Rotation().Axis().z();
+
+                // Display position and orientation on SmartDashboard
+                frc::SmartDashboard::PutNumber(cameraName + " X (m)", x);
+                frc::SmartDashboard::PutNumber(cameraName + " Y (m)", y);
+                frc::SmartDashboard::PutNumber(cameraName + " Z (m)", z);
+                frc::SmartDashboard::PutNumber(cameraName + " Roll (deg)", roll);
+                frc::SmartDashboard::PutNumber(cameraName + " Pitch (deg)", pitch);
+                frc::SmartDashboard::PutNumber(cameraName + " Yaw (deg)", yaw);
+            } 
+        } 
+        else 
+        {
+            frc::SmartDashboard::PutString(cameraName + " Pose Status", "No Targets");
+        }
+    }
 }
 #pragma endregion
 

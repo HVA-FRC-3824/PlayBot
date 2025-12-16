@@ -22,10 +22,6 @@ void Robot::RobotPeriodic()
 {
     // Run the command scheduler
     frc2::CommandScheduler::GetInstance().Run();
-
-    // Process camera results for both cameras
-    m_robotContainer->ProcessCameraResults(m_robotContainer->GetRightCamera(), "Right");
-    m_robotContainer->ProcessCameraResults(m_robotContainer->GetLeftCamera(),  "Left");
 }
 #pragma endregion
 

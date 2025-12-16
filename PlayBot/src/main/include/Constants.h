@@ -173,9 +173,9 @@ namespace constants
     #pragma region Vision
     namespace vision
     {
-        constexpr std::string_view            CameraName{"PhotonCamera"};
+        constexpr std::string_view            CameraNameRight{"PhotonCamera"};
 
-        constexpr frc::Transform3d            RobotToCam{frc::Translation3d{0_m, 4_in, 15_in}, frc::Rotation3d{}};
+        constexpr frc::Transform3d            RobotToCameraRight{frc::Translation3d{0_m, 4_in, 15_in}, frc::Rotation3d{}};
 
         const     frc::AprilTagFieldLayout    TagLayout = frc::AprilTagFieldLayout::LoadField(frc::AprilTagField::k2025ReefscapeAndyMark);
 
