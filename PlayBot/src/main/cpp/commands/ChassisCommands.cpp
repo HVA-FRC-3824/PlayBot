@@ -1,5 +1,19 @@
 #include "commands/ChassisCommands.h"
 
+#pragma region FlipFieldCentricity(Chassis* chassis)
+/// @brief Creates a command to flip the field centricity of the chassis.
+/// @param chassis A pointer to the chassis subsystem.
+/// @return A CommandPtr that flips the field centricity.
+frc2::CommandPtr FlipFieldCentricity(Chassis* chassis)
+{
+    // Create and return a InstantCommand that flips the field centricity
+    return frc2::InstantCommand{
+        [chassis] () { chassis->FlipFieldCentric(); }, // Execution function
+        { chassis } // Requirements (subsystems required by this command)
+    }.ToPtr();
+}
+#pragma endregion
+
 #pragma region ChassisZeroHeading(Chassis* chassis)
 /// @brief Creates a command to zero the heading of the gyro.
 /// @param chassis A pointer to the chassis subsystem.
@@ -56,20 +70,6 @@ frc2::CommandPtr ChassisDrivePose(Chassis* chassis, frc::Pose2d targetPose)
 
     // Note: Temporary fix for pathplanner not working correctly when called immediately after another command
     return frc2::WaitCommand(0.1_s).ToPtr();
-}
-#pragma endregion
-
-#pragma region FlipFieldCentricity(Chassis* chassis)
-/// @brief Creates a command to flip the field centricity of the chassis.
-/// @param chassis A pointer to the chassis subsystem.
-/// @return A CommandPtr that flips the field centricity.
-frc2::CommandPtr FlipFieldCentricity(Chassis* chassis)
-{
-    // Create and return a InstantCommand that flips the field centricity
-    return frc2::InstantCommand{
-        [chassis] () { chassis->FlipFieldCentric(); }, // Execution function
-        { chassis } // Requirements (subsystems required by this command)
-    }.ToPtr();
 }
 #pragma endregion
 
