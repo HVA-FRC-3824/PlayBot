@@ -197,6 +197,15 @@ namespace motor
                 m_sparkSim.SetPosition(positionTurns);
             }
 
+            inline units::ampere_t GetCurrent()
+            {
+                if (frc::RobotBase::IsSimulation())
+                {
+                    return m_motorSim.GetCurrentDraw();
+                }
+                return units::ampere_t{m_motor.GetOutputCurrent()};
+            }
+
             inline units::volt_t GetVoltage()
             {
                 if (frc::RobotBase::IsSimulation())
@@ -204,6 +213,11 @@ namespace motor
                     return units::volt_t{m_motorSim.GetInputVoltage().value()};
                 }
                 return units::volt_t{m_motor.GetAppliedOutput() * m_motor.GetBusVoltage()};
+            }
+
+            inline double GetTemperature()
+            {
+                return m_motor.GetMotorTemperature();
             }
 
         private:

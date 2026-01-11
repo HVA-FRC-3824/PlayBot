@@ -207,6 +207,15 @@ namespace motor
                 talonFXSim.SetRotorVelocity(units::turns_per_second_t{m_motorSim.GetAngularVelocity().value() / (2.0 * std::numbers::pi)});
             }
 
+            inline units::ampere_t GetCurrent()
+            {
+                if (frc::RobotBase::IsSimulation())
+                {
+                    return m_motorSim.GetCurrentDraw();
+                }
+                return m_motor.GetStatorCurrent().GetValue();
+            }
+
             inline units::volt_t GetVoltage()
             {
                 if (frc::RobotBase::IsSimulation())
