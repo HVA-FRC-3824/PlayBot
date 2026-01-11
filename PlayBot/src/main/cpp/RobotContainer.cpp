@@ -25,16 +25,9 @@ RobotContainer *RobotContainer::GetInstance()
 RobotContainer::RobotContainer()
 {
     // // Configure the chassis default command
-    m_chassis.SetDefaultCommand(frc2::RunCommand(
-        [this]()
-        {
-            // Call the chassis drive method with the desired speeds
-            m_chassis.Drive(GetChassisSpeeds()());  // Add () to invoke the function
-        },
-        {&m_chassis} // Subsystem requirements
-    ));
+    m_chassis.SetDefaultCommand(ChassisDrive(&m_chassis, GetChassisSpeeds()));
 
-    m_led.SetPattern(LEDType::GRADIENT, {frc::Color::kPurple, frc::Color::kGold});
+    // m_led.SetPattern(LEDType::GRADIENT, {frc::Color::kPurple, frc::Color::kGold});
 
     // Array of run-once controls, organized like this for simplicity and readability
     std::pair<Button, frc2::CommandPtr> runOnceControls[] =
@@ -78,14 +71,13 @@ RobotContainer::RobotContainer()
 /// @return The chassis speeds based on joystick inputs.
 std::function<frc::ChassisSpeeds()> RobotContainer::GetChassisSpeeds()
 {
-    // Return the chassis speeds based on joystick inputs
-    return [this] () -> frc::ChassisSpeeds
+    return [&]()
     {
         // Return the chassis speeds based on joystick inputs
         return frc::ChassisSpeeds{
-            -constants::swerve::maxSpeed           * frc::ApplyDeadband(m_driveController.GetRawAxis(1), constants::controller::TranslationDeadZone),
-            -constants::swerve::maxSpeed           * frc::ApplyDeadband(m_driveController.GetRawAxis(0), constants::controller::TranslationDeadZone),
-             constants::swerve::maxAngularVelocity * frc::ApplyDeadband(m_driveController.GetRawAxis(4), constants::controller::RotateDeadZone)
+            -constants::swerve::maxSpeed           * frc::ApplyDeadband(-m_driveController.GetRawAxis(1), constants::controller::TranslationDeadZone),
+            -constants::swerve::maxSpeed           * frc::ApplyDeadband(-m_driveController.GetRawAxis(0), constants::controller::TranslationDeadZone),
+             constants::swerve::maxAngularVelocity * frc::ApplyDeadband(-m_driveController.GetRawAxis(4), constants::controller::RotateDeadZone)
         };
     };
 }

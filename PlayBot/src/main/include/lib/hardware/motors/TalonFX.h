@@ -29,11 +29,11 @@ namespace motor
         
         public:
 
-            inline TalonFX(CANid_t CANid, MotorConfiguration config, frc::DCMotor motorModel, units::kilogram_square_meter_t simMomentOfIntertia = 0.001_kg_sq_m) 
+            inline TalonFX(CANid_t CANid, MotorConfiguration config, frc::DCMotor motorModel, units::kilogram_square_meter_t simMomentOfInertia = 0.001_kg_sq_m) 
                 : Motor{frc::sim::DCMotorSim(
                     frc::LinearSystemId::DCMotorSystem(
                         motorModel,
-                        simMomentOfIntertia,
+                        simMomentOfInertia,
                         1
                     ),
                     motorModel
@@ -43,23 +43,28 @@ namespace motor
                 ConfigureMotor(config);
             }
 
-            inline void ConfigureMotor(MotorConfiguration config) override // Configure the motor with default settings
+            inline void ConfigureMotor(MotorConfiguration config) override
             {
-                // Create the drive motor configuration
+                constexpr int MAX_CONFIG_RETRIES = 3;
+                
+                // Create the TalonFX configuration
                 ctre::phoenix6::configs::TalonFXConfiguration talonFXConfiguration{};
-                // Add the "Motor Output" section settings
+                
+                // Configure Motor Output settings
                 ctre::phoenix6::configs::MotorOutputConfigs &motorOutputConfigs = talonFXConfiguration.MotorOutput;
                 motorOutputConfigs.NeutralMode = config.breakMode
                     ? ctre::phoenix6::signals::NeutralModeValue::Brake
                     : ctre::phoenix6::signals::NeutralModeValue::Coast;
 
-                // Add the "Current Limits" section settings
+                // Configure Current Limits
                 ctre::phoenix6::configs::CurrentLimitsConfigs &currentLimitsConfigs = talonFXConfiguration.CurrentLimits;
-                currentLimitsConfigs.StatorCurrentLimit       = config.CurrentLimit;
+                currentLimitsConfigs.StatorCurrentLimit = config.CurrentLimit;
                 currentLimitsConfigs.StatorCurrentLimitEnable = true;
+                // Also set supply current limit for battery protection
+                currentLimitsConfigs.SupplyCurrentLimit = config.CurrentLimit;
+                currentLimitsConfigs.SupplyCurrentLimitEnable = true;
 
-                // Add the "Slot0" section settings
-                // PID Controls and optional feedforward controls
+                // Configure PID and Feedforward (Slot 0)
                 ctre::phoenix6::configs::Slot0Configs &slot0Configs = talonFXConfiguration.Slot0;
                 slot0Configs.kP = config.P;
                 slot0Configs.kI = config.I;
@@ -68,75 +73,118 @@ namespace motor
                 slot0Configs.kV = config.V;
                 slot0Configs.kA = config.A;
 
-                // Try to apply the configuration multiple times in case of failure
+                // Configure MotionMagic parameters
+                ctre::phoenix6::configs::MotionMagicConfigs &motionMagicConfigs = talonFXConfiguration.MotionMagic;
+                motionMagicConfigs.MotionMagicCruiseVelocity = units::turns_per_second_t{config.S};
+                motionMagicConfigs.MotionMagicAcceleration = units::turns_per_second_squared_t{config.V};
+                motionMagicConfigs.MotionMagicJerk = units::turns_per_second_cubed_t{config.A};
+
+                // Try to apply the configuration with retries
                 ctre::phoenix::StatusCode status = ctre::phoenix::StatusCode::StatusCodeNotInitialized;
-                for (int attempt = 0; attempt < 3; attempt++) // 3 is the number of names in Dean Lawrence Kamen's name
+                for (int attempt = 0; attempt < MAX_CONFIG_RETRIES; attempt++)
                 {
-                    // Apply the configuration to the drive motor
                     status = m_motor.GetConfigurator().Apply(talonFXConfiguration);
-                    // Check if the configuration was successful
                     if (status.IsOK())
-                    break;
+                    {
+                        break;
+                    }
+                    // Small delay before retry
+                    std::this_thread::sleep_for(std::chrono::milliseconds(10));
                 }
 
-                // Determine if the last configuration load was successful
+                // Report configuration status
                 if (!status.IsOK())
-                    std::cout << "***** ERROR: Could not configure TalonFX motor (" << m_motor.GetDeviceID() <<"). Error: " << status.GetName() << std::endl;
+                {
+                    std::cerr << "***** ERROR: Could not configure TalonFX motor (CAN ID: " 
+                              << m_motor.GetDeviceID() << "). Error: " << status.GetName() 
+                              << " (" << status.GetDescription() << ")" << std::endl;
+                }
+                else
+                {
+                    std::cout << "TalonFX motor (CAN ID: " << m_motor.GetDeviceID() 
+                              << ") configured successfully." << std::endl;
+                }
             }
 
-            inline void SetReferenceState(double motorInput) override // output to motor within (-1,1)
+            inline void SetReferenceState(double motorInput) override
             {
-                // Set the motor speed and angle
+                // Set the motor duty cycle [-1, 1]
                 m_motor.Set(motorInput);
 
-                m_motorSim.SetInputVoltage(motorInput * frc::RobotController::GetBatteryVoltage());
+                // In simulation, apply the voltage to the motor model
+                if (frc::RobotBase::IsSimulation())
+                {
+                    m_motorSim.SetInputVoltage(motorInput * frc::RobotController::GetBatteryVoltage());
+                }
             }
 
-            inline void SetReferenceState(units::turns_per_second_t motorInput) override // output to motor within (-1,1)
+            inline void SetReferenceState(units::turns_per_second_t motorInput) override
             {
-                // Set the motor speed and angle
+                // Set the motor velocity using closed-loop control
                 m_motor.SetControl(ctre::phoenix6::controls::VelocityVoltage(motorInput));
 
-                m_motorSim.SetAngularVelocity(units::radians_per_second_t{motorInput.value()});
+                // In simulation, we can't directly set velocity - the physics sim will handle it
+                // But we can estimate the voltage needed for this velocity and apply it
+                if (frc::RobotBase::IsSimulation())
+                {
+                    // Simple feedforward estimation: voltage ≈ kV * velocity
+                    // The actual closed-loop controller would adjust this, but for sim this is reasonable
+                    auto estimatedVoltage = motorInput.value() * m_slot0Configs.kV.value();
+                    m_motorSim.SetInputVoltage(units::volt_t{estimatedVoltage});
+                }
             }
 
-            inline void SetReferenceState(units::volt_t motorInput) override // output to motor within (-1,1)
+            inline void SetReferenceState(units::volt_t motorInput) override
             {
-                // Set the motor speed and angle
+                // Set the motor voltage directly
                 m_motor.SetVoltage(motorInput);
 
-                m_motorSim.SetInputVoltage(motorInput);
+                // In simulation, apply the voltage to the motor model
+                if (frc::RobotBase::IsSimulation())
+                {
+                    m_motorSim.SetInputVoltage(motorInput);
+                }
             }
 
-            inline void SetReferenceState(units::turn_t motorInput) override // output to motor in turns
+            inline void SetReferenceState(units::turn_t motorInput) override
             {
-                // Set the arm set position
+                // Set the motor position using MotionMagic
                 m_motor.SetControl(m_motionMagicVoltage.WithPosition(motorInput).WithSlot(0));
 
-                m_motorSim.SetAngle(units::radian_t{motorInput.value()});
+                // In simulation, the position control will be handled by SimPeriodic
+                // We don't directly set position here to maintain realistic physics
             }
 
-            inline units::turn_t GetPosition() override // Returns the position of the motor in turns
+            inline units::turn_t GetPosition() override
             {
                 if (frc::RobotBase::IsSimulation())
                 {
-                    return units::turn_t{m_motorSim.GetAngularPosition().value()};
+                    // Convert radians to turns
+                    return units::turn_t{m_motorSim.GetAngularPosition().value() / (2.0 * std::numbers::pi)};
                 }
                 return m_motor.GetPosition().GetValue();
             }
 
-            inline units::turns_per_second_t GetVelocity() override // Returns the velocity of the motor in turns
+            inline units::turns_per_second_t GetVelocity() override
             {
                 if (frc::RobotBase::IsSimulation())
                 {
-                    return units::turns_per_second_t{m_motorSim.GetAngularVelocity().value()};
+                    // Convert radians per second to turns per second
+                    return units::turns_per_second_t{m_motorSim.GetAngularVelocity().value() / (2.0 * std::numbers::pi)};
                 }
                 return m_motor.GetVelocity().GetValue();
             }
 
-            inline void OffsetEncoder(units::turn_t offset) override // Returns the current of the motor in amps
+            inline void OffsetEncoder(units::turn_t offset) override
             {
                 m_motor.SetPosition(offset);
+                
+                if (frc::RobotBase::IsSimulation())
+                {
+                    // Convert turns to radians for the simulation
+                    m_motorSim.SetState(units::radian_t{offset.value() * 2.0 * std::numbers::pi}, 
+                                       m_motorSim.GetAngularVelocity());
+                }
             }
 
             inline void SimPeriodic() override
@@ -146,22 +194,42 @@ namespace motor
                 // Set the supply voltage of the TalonFX
                 talonFXSim.SetSupplyVoltage(frc::RobotController::GetBatteryVoltage());
 
-                // Get the motor voltage of the TalonFX
+                // Get the motor voltage of the TalonFX (this reflects what the controller is commanding)
                 auto motorVoltage = talonFXSim.GetMotorVoltage();
 
-                // Use the motor voltage to calculate new position and velocity
+                // Use the motor voltage to calculate new position and velocity using physics simulation
                 m_motorSim.SetInputVoltage(motorVoltage);
                 m_motorSim.Update(20_ms);
 
-                // Apply the new rotor position and velocity to the TalonFX
-                talonFXSim.SetRawRotorPosition(units::turn_t{m_motorSim.GetAngularPosition().value()});
-                talonFXSim.SetRotorVelocity(units::turns_per_second_t{m_motorSim.GetAngularVelocity().value()});
+                // Apply the new rotor position and velocity back to the TalonFX
+                // Convert radians to turns
+                talonFXSim.SetRawRotorPosition(units::turn_t{m_motorSim.GetAngularPosition().value() / (2.0 * std::numbers::pi)});
+                talonFXSim.SetRotorVelocity(units::turns_per_second_t{m_motorSim.GetAngularVelocity().value() / (2.0 * std::numbers::pi)});
+            }
+
+            inline units::ampere_t GetCurrent()
+            {
+                if (frc::RobotBase::IsSimulation())
+                {
+                    return m_motorSim.GetCurrentDraw();
+                }
+                return m_motor.GetStatorCurrent().GetValue();
+            }
+
+            inline units::volt_t GetVoltage()
+            {
+                if (frc::RobotBase::IsSimulation())
+                {
+                    return units::volt_t{m_motorSim.GetInputVoltage().value()};
+                }
+                return m_motor.GetMotorVoltage().GetValue();
             }
 
         private:
 
-            ctre::phoenix6::hardware::TalonFX             m_motor;    // TalonFX motor controller
+            ctre::phoenix6::hardware::TalonFX             m_motor;
             ctre::phoenix6::controls::MotionMagicVoltage  m_motionMagicVoltage{0_tr};
+            ctre::phoenix6::configs::Slot0Configs         m_slot0Configs{};
             
     };
 
