@@ -11,6 +11,33 @@ frc2::CommandPtr SetVolcanoFlywheelSpeed(Volcano* volcano, units::turns_per_seco
 }
 #pragma endregion
 
+#pragma region VolcanoVariableFlywheelSpeed
+/// @brief Creates a command to set the volcano flywheel to a variable speed.
+/// @param volcano A pointer to the Volcano subsystem.
+/// @param upSpeedFunc A function that raises the target speed by 100 turns per second
+/// @param downSpeedFunc A function that lowers the target speed by 100 turns per second
+frc2::CommandPtr VolcanoVariableFlywheelSpeed(Volcano* volcano, std::function<bool()> upSpeedFunc, std::function<bool()> downSpeedFunc)
+{
+    // Create and return a RunCommand that sets the flywheel speed based on the input functions
+    return frc2::RunCommand(
+        [&]()
+        {
+            // Persists between each time the command is scheduled
+            static units::turns_per_second_t targetSpeed = constants::volcano::targetFlywheelSpeed;
+
+            // Adjust the target speed based on the input functions
+            if (upSpeedFunc())
+                targetSpeed += 100_tps;
+            else if (downSpeedFunc())
+                targetSpeed -= 100_tps;
+
+            volcano->SetFlywheel(targetSpeed);
+        },
+        { volcano }
+    ).ToPtr();
+}
+#pragma endregion
+
 #pragma region VolcanoFlywheelOn
 /// @brief Creates a command to turn the volcano flywheel on to default speed.
 /// @param volcano A pointer to the Volcano subsystem.
@@ -91,37 +118,5 @@ frc2::CommandPtr VolcanoStopAll(Volcano* volcano)
             volcano->SetKicker(false);
             volcano->SetFlywheel(0_tps);
         }, { volcano }}.ToPtr();
-}
-#pragma endregion
-
-#pragma region VolcanoVariableFlywheelSpeed
-/// @brief Creates a command to set the volcano flywheel to a variable speed.
-/// @param volcano A pointer to the Volcano subsystem.
-/// @param upSpeedFunc A function that raises the target speed by 100 turns per second
-/// @param downSpeedFunc A function that lowers the target speed by 100 turns per second
-frc2::CommandPtr VolcanoVariableFlywheelSpeed(
-    Volcano* volcano,
-    std::function<bool()> upSpeedFunc,
-    std::function<bool()> downSpeedFunc)
-{
-    // Create and return a RunCommand that sets the flywheel speed based on the input functions
-    return frc2::RunCommand(
-        [&]()
-        {
-            // Persists between each time the command is scheduled
-            static units::turns_per_second_t targetSpeed = constants::volcano::targetFlywheelSpeed;
-
-            if (upSpeedFunc())
-            {
-                targetSpeed += 100_tps;
-            }
-            else if (downSpeedFunc())
-            {
-                targetSpeed -= 100_tps;
-            }
-            volcano->SetFlywheel(targetSpeed);
-        },
-        { volcano }
-    ).ToPtr();
 }
 #pragma endregion
