@@ -54,20 +54,15 @@ void Chassis::Drive(const frc::ChassisSpeeds& speeds)
     // Set the module states
     m_desiredStates = m_kinematics.ToSwerveModuleStates(m_isFieldRelative ? frc::ChassisSpeeds::FromFieldRelativeSpeeds(speeds, GetHeading()) : speeds);
 
-    // Loop through each swerve module
-    for (int swerveModule = 0; swerveModule < 4; swerveModule++)
-    {
-        // Set the desired state for each swerve module
-        m_swerveModules[swerveModule].SetDesiredState(m_desiredStates[swerveModule]);  
-
-        // Log the speed and direction for each module
-        frc::SmartDashboard::PutNumber("Module " + std::to_string(swerveModule) + " Speed",     m_desiredStates[swerveModule].speed.value());
-        frc::SmartDashboard::PutNumber("Module " + std::to_string(swerveModule) + " Direction", m_desiredStates[swerveModule].angle.Degrees().value());
-    }
+    // Set the desired state for each swerve module
+    m_swerveModules[0].SetDesiredState(m_desiredStates[0]);
+    m_swerveModules[1].SetDesiredState(m_desiredStates[1]);
+    m_swerveModules[2].SetDesiredState(m_desiredStates[2]);
+    m_swerveModules[3].SetDesiredState(m_desiredStates[3]);
 
     // Simulate the gyro in simulation
-    if (frc::RobotBase::IsSimulation())
-       m_gyro.SimPeriodic(speeds.omega);
+    // if (frc::RobotBase::IsSimulation())
+    //    m_gyro.SimPeriodic(speeds.omega);
 }
 #pragma endregion
 

@@ -92,10 +92,6 @@ void SwerveModule::ResetDriveEncoder()
 /// @param forwardAngle The absolute angle for the forward direction.
 void SwerveModule::SetWheelAngleToForward(units::angle::radian_t forwardAngle)
 {
-    // Do not run this method in simulation
-    if (frc::RobotBase::IsSimulation()) 
-        return;
-
     // Ensure the drive motor encoder is reset to zero
     m_driveMotor.SetReferenceState(0_tr);
 
@@ -103,7 +99,7 @@ void SwerveModule::SetWheelAngleToForward(units::angle::radian_t forwardAngle)
     m_angleMotor.OffsetEncoder(units::turn_t((GetAbsoluteEncoderAngle().value() - forwardAngle.value())));
 
     // Set the motor angle to the forward direction
-    m_angleMotor.SetReferenceState(0.0_tr);
+    m_angleMotor.SetReferenceState(0_tr);
 }
 #pragma endregion
 

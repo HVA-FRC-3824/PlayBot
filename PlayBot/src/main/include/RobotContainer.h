@@ -34,16 +34,13 @@ class RobotContainer
         // Private class constructor to configure the robot and SmartDashboard configuration
         RobotContainer();
 
-        std::function<frc::ChassisSpeeds()> GetChassisSpeeds();
+        std::function<frc::ChassisSpeeds()>                  GetChassisSpeeds();
 
         double                              GetExponentialValue(double joystickValue, double exponent);
-            
-        // Singleton reference to the class (returned by the GetInstance Method)
-        static RobotContainer              *m_robotContainer;
 
         frc::XboxController                 m_driveController{constants::controller::DrivePort};
 
-        frc::SlewRateLimiter<units::scalar> m_flywheelLimiter{1.0 / 0.5_s};  // Full throttle change in 0.5 seconds
+        frc::SlewRateLimiter<units::scalar> m_flywheelLimiter{1.0 / 0.1_s};  // Full throttle change in 0.5 seconds
 
         bool                                m_isManualFlywheelControl = false;
 
@@ -52,4 +49,6 @@ class RobotContainer
         Volcano                             m_volcano;
 
         // LED<constants::led::length>         m_led = LED<constants::led::length>(constants::led::port);
+        photon::PhotonCamera cameraRight{"CameraRight"};
+        photon::PhotonCamera cameraLeft{"CameraLeft"};
 };

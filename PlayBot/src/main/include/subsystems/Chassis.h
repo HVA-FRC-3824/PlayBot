@@ -76,9 +76,9 @@ class Chassis : public frc2::SubsystemBase
 
         frc::SwerveDriveKinematics<4> m_kinematics
         {
-            frc::Translation2d{+constants::swerve::wheelBase / 2, +constants::swerve::trackWidth / 2}, // Front Left
-            frc::Translation2d{+constants::swerve::wheelBase / 2, -constants::swerve::trackWidth / 2}, // Front Right
-            frc::Translation2d{-constants::swerve::wheelBase / 2, +constants::swerve::trackWidth / 2}, // Back Left
+            frc::Translation2d{ constants::swerve::wheelBase / 2,  constants::swerve::trackWidth / 2}, // Front Left
+            frc::Translation2d{ constants::swerve::wheelBase / 2, -constants::swerve::trackWidth / 2}, // Front Right
+            frc::Translation2d{-constants::swerve::wheelBase / 2,  constants::swerve::trackWidth / 2}, // Back Left
             frc::Translation2d{-constants::swerve::wheelBase / 2, -constants::swerve::trackWidth / 2}  // Back Right
         };
 
@@ -86,13 +86,17 @@ class Chassis : public frc2::SubsystemBase
         {
             m_kinematics,                                 // Kinematics object
             frc::Rotation2d(),                            // Initial gyro angle
-            std::array<frc::SwerveModulePosition, 4>{},   // Initial module positions
-            frc::Pose2d()                                 // Initial pose
+            GetModulePositions(),   // Initial module positions
+            frc::Pose2d()           // Initial pose
         };
 
         frc::ChassisSpeeds                    m_desiredSpeeds{0_mps, 0_mps, 0_rad_per_s};
 
-        wpi::array<frc::SwerveModuleState, 4> m_desiredStates = GetModuleStates();
+        wpi::array<frc::SwerveModuleState, 4> m_desiredStates = wpi::array<frc::SwerveModuleState, 4>
+        {
+            frc::SwerveModuleState{0_mps, frc::Rotation2d()}, frc::SwerveModuleState{0_mps, frc::Rotation2d()}, 
+            frc::SwerveModuleState{0_mps, frc::Rotation2d()}, frc::SwerveModuleState{0_mps, frc::Rotation2d()}
+        };
             
         bool                                  m_isFieldRelative = true;
     
